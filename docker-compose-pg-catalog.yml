@@ -5,20 +5,34 @@ services:
     image: postgres:15-alpine
     container_name: pg_catalog
     environment:
-      - POSTGRES_USER=iceberg
-      - POSTGRES_PASSWORD=iceberg
-      - POSTGRES_DB=iceberg
+      - POSTGRES_USER=kxuiceberg
+      - POSTGRES_PASSWORD=kxuiceberg
+      - POSTGRES_DB=kxuiceberg
     healthcheck:
-      test: [ "CMD", "pg_isready", "-U", "iceberg" ]
+      test: [ "CMD", "pg_isready", "-U", "kxuiceberg" ]
       interval: 5s
       retries: 5
     ports:
       - "5432:5432"
+    # Mount local directory to PostgreSQL data directory
+    #volumes:
+    #  - ./data/pgdata:/var/lib/postgresql/data  
+
 
   spark-iceberg:
     build:
       context: ./spark
-      args:
-        SPARK_DEFAULTS_CONF: spark-defaults-pg-catalog.conf
+      #args:  //not used anymore, we monunt file directly
+      #  SPARK_DEFAULTS_CONF: spark-defaults-pg-catalog.conf
+    volumes:
+      - ./spark/spark-defaults-pg-catalog.conf:/opt/spark/conf/spark-defaults.conf #mount default config file       
     depends_on:
       - pg-catalog
+  
+  spark-worker:
+    volumes:
+      - ./spark/spark-defaults-pg-catalog.conf:/opt/spark/conf/spark-defaults.conf #mount default config file       
+
+  spark-history-server:
+    volumes:
+      - ./spark/spark-defaults-pg-catalog.conf:/opt/spark/conf/spark-defaults.conf #mount default config file   

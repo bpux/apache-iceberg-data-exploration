@@ -10,6 +10,7 @@ RUN apt-get update && \
       openjdk-11-jdk \
       build-essential \
       software-properties-common \
+      telnet \
       ssh && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
@@ -29,7 +30,7 @@ ENV SPARK_VERSION=3.5.0
 ARG SPARK_DEFAULTS_CONF=spark-defaults.conf
 
 RUN curl https://dlcdn.apache.org/spark/spark-${SPARK_VERSION}/spark-${SPARK_VERSION}-bin-hadoop3.tgz -o spark-${SPARK_VERSION}-bin-hadoop3.tgz \
- && tar xvzf spark-${SPARK_VERSION}-bin-hadoop3.tgz --directory /opt/spark --strip-components 1 \
+ && tar xvzf spark-${SPARK_VERSION}-bin-hadoop3.tgz --directory ${SPARK_HOME} --strip-components 1 \
  && rm -rf spark-${SPARK_VERSION}-bin-hadoop3.tgz
 
 
@@ -45,7 +46,7 @@ RUN pip3 install -r requirements.txt
 FROM pyspark-base as pyspark
 
 # Setup Spark related environment variables
-ENV PATH="/opt/spark/sbin:/opt/spark/bin:${PATH}"
+ENV PATH="${SPARK_HOME}/sbin:${SPARK_HOME}/bin:${PATH}"
 ENV SPARK_MASTER="spark://spark-iceberg:7077"
 ENV SPARK_MASTER_HOST spark-iceberg
 ENV SPARK_MASTER_PORT 7077
@@ -55,8 +56,8 @@ ENV PYSPARK_PYTHON python3
 #COPY spark-defaults.conf "$SPARK_HOME/conf"
 COPY ${SPARK_DEFAULTS_CONF} "$SPARK_HOME/conf/spark-defaults.conf"
 
-RUN chmod u+x /opt/spark/sbin/* && \
-    chmod u+x /opt/spark/bin/*
+RUN chmod u+x ${SPARK_HOME}/sbin/* && \
+    chmod u+x ${SPARK_HOME}/bin/*
 
 # Copy appropriate entrypoint script
 COPY entrypoint.sh .
@@ -72,11 +73,11 @@ ARG ICEBERG_SPARK_SCALA="iceberg-spark-runtime-${SPARK_MAJOR_VERSION}_2.12"
 ARG JAR_PACKAGE="${ICEBERG_SPARK_SCALA}-${ICEBERG_VERSION}.jar"
 
 # Download iceberg spark runtime
-RUN curl https://repo1.maven.org/maven2/org/apache/iceberg/${ICEBERG_SPARK_SCALA}/${ICEBERG_VERSION}/${JAR_PACKAGE} -Lo /opt/spark/jars/${JAR_PACKAGE}
+RUN curl https://repo1.maven.org/maven2/org/apache/iceberg/${ICEBERG_SPARK_SCALA}/${ICEBERG_VERSION}/${JAR_PACKAGE} -Lo ${SPARK_HOME}/jars/${JAR_PACKAGE}
 
 # Download Java AWS bundle
-# RUN curl https://repo1.maven.org/maven2/software/amazon/awssdk/bundle/2.17.257/bundle-2.17.257.jar -Lo /opt/spark/jars/bundle-2.17.257.jar
-RUN curl -s https://repo1.maven.org/maven2/org/apache/iceberg/iceberg-aws-bundle/${ICEBERG_VERSION}/iceberg-aws-bundle-${ICEBERG_VERSION}.jar -Lo /opt/spark/jars/iceberg-aws-bundle-${ICEBERG_VERSION}.jar
+# RUN curl https://repo1.maven.org/maven2/software/amazon/awssdk/bundle/2.17.257/bundle-2.17.257.jar -Lo ${SPARK_HOME}/jars/bundle-2.17.257.jar
+RUN curl -s https://repo1.maven.org/maven2/org/apache/iceberg/iceberg-aws-bundle/${ICEBERG_VERSION}/iceberg-aws-bundle-${ICEBERG_VERSION}.jar -Lo ${SPARK_HOME}/jars/iceberg-aws-bundle-${ICEBERG_VERSION}.jar
 
 # Install AWS CLI
 RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" \
@@ -86,12 +87,20 @@ RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2
  && rm -rf aws/
 
 
-# Install PostgreSQL JDBC Driver
+# Install PostgreSQL JDBC Driver, we use postgresql as our metastore
 RUN curl "https://jdbc.postgresql.org/download/postgresql-42.6.0.jar" -o "postgresql-42.6.0.jar" \
     && mv postgresql-42.6.0.jar "${SPARK_HOME}/jars/postgresql-42.6.0.jar"
 
-# Add iceberg spark runtime jar to IJava classpath
-ENV IJAVA_CLASSPATH=/opt/spark/jars/*
+# Download Hadoop AWS and AWS SDK JARs. 
+# These are needed for the Hadoop AWS module to work for AWS S3 access
+# when we use localstack as the S3 endpoint
+RUN curl -s https://repo1.maven.org/maven2/org/apache/hadoop/hadoop-aws/3.3.3/hadoop-aws-3.3.3.jar -Lo ${SPARK_HOME}/jars/hadoop-aws-3.3.3.jar \
+ && curl -s https://repo1.maven.org/maven2/com/amazonaws/aws-java-sdk-bundle/1.11.901/aws-java-sdk-bundle-1.11.901.jar -Lo ${SPARK_HOME}/jars/aws-java-sdk-bundle-1.11.901.jar
+
+
+
+    # Add iceberg spark runtime jar to IJava classpath
+ENV IJAVA_CLASSPATH=${SPARK_HOME}/jars/*
 
 RUN mkdir -p /home/iceberg/localwarehouse /home/iceberg/notebooks /home/iceberg/warehouse /home/iceberg/spark-events /home/iceberg
 

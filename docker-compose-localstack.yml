@@ -1,0 +1,101 @@
+version: '3.8'
+
+services:
+  pg-catalog:
+    image: postgres:15-alpine
+    container_name: pg_catalog
+    networks:
+      iceberg-net:
+    environment:
+      - POSTGRES_USER=kxuiceberg
+      - POSTGRES_PASSWORD=kxuiceberg
+      - POSTGRES_DB=kxuiceberg
+    healthcheck:
+      test: [ "CMD", "pg_isready", "-U", "kxuiceberg" ]
+      interval: 5s
+      retries: 5
+    ports:
+      - "5432:5432"
+
+  localstack:
+    image: localstack/localstack
+    container_name: localstack
+    ports:
+      - "4566:4566"  # LocalStack edge port
+      - "4510-4559:4510-4559"  # S3 port
+    environment:
+      - SERVICES=s3
+      - DOCKER_HOST=unix:///var/run/docker.sock
+      - DEFAULT_REGION=us-east-1
+      #- PERSISTENCE=1 # Enable persistence for LocalStack state
+      # LocalStack configuration: https://docs.localstack.cloud/references/configuration/
+      - DEBUG=1
+
+    volumes:
+      - ./data/localstack/s3data:/var/lib/localstack
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      iceberg-net:
+        aliases:
+          - kxu-iceberg-data.localstack
+
+  localstack-init:
+    image: amazon/aws-cli
+    container_name: localstack_init
+    entrypoint: /bin/sh -c
+    command: >
+      "
+      until aws --endpoint-url=http://localstack:4566 s3api create-bucket --bucket kxu-iceberg-data; do
+        echo 'Waiting for LocalStack S3 to be ready...'
+        sleep 5
+      done
+      "
+    depends_on:
+      - localstack
+    environment:
+      - AWS_ACCESS_KEY_ID=dummy
+      - AWS_SECRET_ACCESS_KEY=dummy      
+    networks:
+      iceberg-net:
+
+  spark-iceberg:
+    build:
+      context: ./spark
+      args:
+        SPARK_DEFAULTS_CONF: spark-defaults-localstack.conf #not used anymore
+    networks:
+      iceberg-net:
+    volumes:
+      - ./spark/spark-defaults-localstack.conf:/opt/spark/conf/spark-defaults.conf #mount default config file   
+      - ./log4j.properties:/opt/spark/conf/log4j.properties # mount log4j properties file      
+    depends_on:
+      pg-catalog:
+        condition: service_healthy
+      localstack-init:
+        condition: service_completed_successfully
+    environment:
+      - AWS_ACCESS_KEY_ID=dummy
+      - AWS_SECRET_ACCESS_KEY=dummy        
+
+  spark-worker:
+    volumes:
+      - ./spark/spark-defaults-localstack.conf:/opt/spark/conf/spark-defaults.conf #mount default config file       
+      - ./log4j.properties:/opt/spark/conf/log4j.properties # mount log4j properties file            
+    networks:
+      iceberg-net:
+    environment:
+      - AWS_ACCESS_KEY_ID=dummy
+      - AWS_SECRET_ACCESS_KEY=dummy      
+
+  spark-history-server:
+    volumes:
+      - ./spark/spark-defaults-localstack.conf:/opt/spark/conf/spark-defaults.conf #mount default config file   
+      - ./log4j.properties:/opt/spark/conf/log4j.properties # mount log4j properties file            
+    networks:
+      iceberg-net:
+    environment:
+      - AWS_ACCESS_KEY_ID=dummy
+      - AWS_SECRET_ACCESS_KEY=dummy      
+
+networks:
+  iceberg-net:

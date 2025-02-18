@@ -31,7 +31,7 @@ services:
         aliases:
           - iceberg-data.minio-s3
     volumes:
-      - minio-s3-data:/data
+      - ./data/minio-s3-data:/data
     healthcheck:
       test: ["CMD", "mc", "ready", "local"]
       interval: 30s
@@ -45,7 +45,7 @@ services:
     env_file:
       - ./minio/.env
     volumes:
-      - ./minio/data/:/data
+      - ./data/minio-init-data/:/data
     environment:
       - USER=user
       - COPY_DIR=false
@@ -76,8 +76,8 @@ services:
     networks:
       iceberg-net:
 
-volumes:
-  minio-s3-data:
+#volumes:
+#  minio-s3-data:
 
 networks:
   iceberg-net:

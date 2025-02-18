@@ -9,11 +9,12 @@ services:
     env_file:
       - spark/.env
     volumes:
-      - ./warehouse:/home/iceberg/warehouse
+      - ./spark/spark-defaults.conf:/opt/spark/conf/spark-defaults.conf #mount default config file 
+      - ./data/spark-master-warehouse:/home/iceberg/warehouse
       - ./notebooks:/home/iceberg/notebooks
-      - ./data:/opt/spark/data
-      - ./spark_apps:/opt/spark/apps
-      - spark-logs:/opt/spark/spark-events
+      - ./data/spark-master-data:/opt/spark/data
+      - ./data/spark_master-apps:/opt/spark/apps
+      - ./data/spark-master-logs:/opt/spark/spark-events
     ports:
       - '8888:8888'
       - '8080:8080'
@@ -32,10 +33,11 @@ services:
     environment:
       - SPARK_NO_DAEMONIZE=true
     volumes:
-      - ./data:/opt/spark/data
-      - ./warehouse:/home/iceberg/warehouse
-      - ./spark_apps:/opt/spark/apps
-      - spark-logs:/opt/spark/spark-events
+      - ./spark/spark-defaults.conf:/opt/spark/conf/spark-defaults.conf #mount default config file     
+      - ./data/spark-worker-data:/opt/spark/data
+      - ./data/spark-worker-warehouse:/home/iceberg/warehouse
+      - ./data/spark-worker-apps:/opt/spark/apps
+      - ./data/spark-worker-logs:/opt/spark/spark-events
     ports:
       - '8081:8081'
 
@@ -50,10 +52,11 @@ services:
     environment:
       - SPARK_NO_DAEMONIZE=true
     volumes:
-      - spark-logs:/opt/spark/spark-events
+      - ./spark/spark-defaults.conf:/opt/spark/conf/spark-defaults.conf #mount default config file     
+      - ./data/spark-history-logs:/opt/spark/spark-events
     ports:
       - '18080:18080'
 
 
-volumes:
-  spark-logs:
+#volumes:
+#  spark-logs:

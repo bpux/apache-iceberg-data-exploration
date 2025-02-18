@@ -2,7 +2,6 @@
 down-pg-catalog:
 	docker compose -f docker-compose.yml -f docker-compose-pg-catalog.yml down
 
-
 start-pg-catalog:
 	make stop-pg-catalog && docker compose -f docker-compose.yml -f docker-compose-pg-catalog.yml up
 
@@ -19,6 +18,9 @@ build-pg-catalog:
 	make down-pg-catalog && docker compose -f docker-compose.yml -f docker-compose-pg-catalog.yml build
 
 clean-pg-catalog:
+	docker compose -f docker-compose.yml -f docker-compose-pg-catalog.yml down --volumes --remove-orphans
+
+clean-all-pg-catalog:
 	docker compose -f docker-compose.yml -f docker-compose-pg-catalog.yml down --rmi="all" --volumes
 
 
@@ -42,8 +44,10 @@ build-services-spark-iceberg-minio:
 build-iceberg-minio:
 	make down-iceberg-minio && docker compose -f docker-compose.yml -f docker-compose-minio.yml build
 
-
 clean-iceberg-minio:
+	docker compose -f docker-compose.yml -f docker-compose-minio.yml down --volumes --remove-orphans
+
+clean-all-iceberg-minio:
 	docker compose -f docker-compose.yml -f docker-compose-minio.yml down --rmi="all" --volumes
 
 
@@ -56,3 +60,17 @@ run-minio:
 
 start-s3-storage:
 	docker compose -f docker-compose.yml -f docker-compose-minio.yml up minio-s3
+
+# localstack
+stop-iceberg-localstack:
+	docker compose -f docker-compose.yml -f docker-compose-localstack.yml stop
+
+run-iceberg-localstack:
+	make stop-iceberg-localstack && docker compose -f docker-compose.yml -f docker-compose-localstack.yml up --build
+
+clean-iceberg-localstack:
+	docker compose -f docker-compose.yml -f docker-compose-localstack.yml down --volumes --remove-orphans
+
+clean-all-iceberg-localstack:
+	docker compose -f docker-compose.yml -f docker-compose-localstack.yml down --rmi="all" --volumes
+
