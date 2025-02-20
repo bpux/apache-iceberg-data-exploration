@@ -67,7 +67,7 @@ services:
       iceberg-net:
     volumes:
       - ./spark/spark-defaults-localstack.conf:/opt/spark/conf/spark-defaults.conf #mount default config file   
-      - ./log4j.properties:/opt/spark/conf/log4j.properties # mount log4j properties file      
+      - ./log4j.properties:/opt/spark/conf/log4j.properties # mount log4j properties file
     depends_on:
       pg-catalog:
         condition: service_healthy
@@ -81,6 +81,7 @@ services:
     volumes:
       - ./spark/spark-defaults-localstack.conf:/opt/spark/conf/spark-defaults.conf #mount default config file       
       - ./log4j.properties:/opt/spark/conf/log4j.properties # mount log4j properties file            
+
     networks:
       iceberg-net:
     environment:
@@ -91,11 +92,12 @@ services:
     volumes:
       - ./spark/spark-defaults-localstack.conf:/opt/spark/conf/spark-defaults.conf #mount default config file   
       - ./log4j.properties:/opt/spark/conf/log4j.properties # mount log4j properties file            
+
     networks:
       iceberg-net:
     environment:
       - AWS_ACCESS_KEY_ID=dummy
-      - AWS_SECRET_ACCESS_KEY=dummy      
+      - AWS_SECRET_ACCESS_KEY=dummy
 
 networks:
   iceberg-net:

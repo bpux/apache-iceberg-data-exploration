@@ -2,34 +2,41 @@ version: '3.8'
 
 services:
   pg-catalog:
-    image: postgres:15-alpine
+    image: postgres:17.3
     container_name: pg_catalog
     networks:
       iceberg-net:
     environment:
-      - POSTGRES_USER=iceberg
-      - POSTGRES_PASSWORD=iceberg
-      - POSTGRES_DB=iceberg
+      - POSTGRES_USER=kxuiceberg
+      - POSTGRES_PASSWORD=kxuiceberg
+      - POSTGRES_DB=kxuiceberg
     healthcheck:
-      test: [ "CMD", "pg_isready", "-U", "iceberg" ]
+      test: [ "CMD", "pg_isready", "-U", "kxuiceberg" ]
       interval: 5s
       retries: 5
     ports:
       - "5432:5432"
 
   minio-s3:
-    image: minio/minio
+    #image: minio/minio:RELEASE.2024-12-18T13-15-44Z
+    image: minio/minio:RELEASE.2025-02-07T23-21-09Z-cpuv1
+
     container_name: iceberg_s3
     ports:
       - "9000:9000"
       - "9001:9001"
+    environment:
+      - MINIO_ROOT_USER=user
+      - MINIO_ROOT_PASSWORD=password
     env_file:
       - ./minio/.env
     command: server --console-address ":9001" /data
     networks:
       iceberg-net:
         aliases:
-          - iceberg-data.minio-s3
+           #spark needs to write to the bucket
+           #need config in the 'spark-defaults.conf' too
+          - kxu-iceberg-data.minio-s3
     volumes:
       - ./data/minio-s3-data:/data
     healthcheck:
@@ -48,8 +55,10 @@ services:
       - ./data/minio-init-data/:/data
     environment:
       - USER=user
+      - MINIO_ROOT_USER=user
+      - MINIO_ROOT_PASSWORD=password
       - COPY_DIR=false
-      - INPUT_BUCKETS=iceberg-data
+      - INPUT_BUCKETS=kxu-iceberg-data
     depends_on:
       - minio-s3
     entrypoint: /bin/sh ./entrypoint.sh
@@ -58,8 +67,9 @@ services:
   spark-iceberg:
     build:
       context: ./spark
-      args:
-        SPARK_DEFAULTS_CONF: spark-defaults-minio.conf
+    volumes:
+      - ./spark/spark-defaults-minio.conf:/opt/spark/conf/spark-defaults.conf #mount default config file   
+      - ./log4j.properties:/opt/spark/conf/log4j.properties # mount log4j properties file
     networks:
       iceberg-net:
     depends_on:
@@ -69,13 +79,36 @@ services:
         condition: service_completed_successfully
 
   spark-worker:
+    volumes:
+      - ./spark/spark-defaults-minio.conf:/opt/spark/conf/spark-defaults.conf #mount default config file   
+      - ./log4j.properties:/opt/spark/conf/log4j.properties # mount log4j properties file
     networks:
       iceberg-net:
 
   spark-history-server:
+    volumes:
+      - ./spark/spark-defaults-minio.conf:/opt/spark/conf/spark-defaults.conf #mount default config file   
+      - ./log4j.properties:/opt/spark/conf/log4j.properties # mount log4j properties file
     networks:
       iceberg-net:
 
+
+  iceberg-rest:
+    image: tabulario/iceberg-rest
+    container_name: iceberg-rest
+    environment:
+      - ICEBERG_CATALOG_NAME=data
+      - ICEBERG_CATALOG_TYPE=jdbc
+      - ICEBERG_CATALOG_URI=jdbc:postgresql://pg-catalog:5432/kxuiceberg
+      - ICEBERG_CATALOG_JDBC_USER=kxuiceberg
+      - ICEBERG_CATALOG_JDBC_PASSWORD=kxuiceberg
+    ports:
+      - '8181:8181'
+    networks:
+      iceberg-net:
+    depends_on:
+      - spark-iceberg
+      - pg-catalog
 #volumes:
 #  minio-s3-data:
 

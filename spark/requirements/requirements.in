@@ -1,2 +1,4 @@
 jupyter
 pyiceberg[pyarrow,duckdb,pandas]
+pyspark
+boto3

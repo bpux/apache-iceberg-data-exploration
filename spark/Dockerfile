@@ -25,14 +25,11 @@ RUN mkdir -p ${HADOOP_HOME} && mkdir -p ${SPARK_HOME}
 WORKDIR ${SPARK_HOME}
 
 # Download and install Spark
-ENV SPARK_VERSION=3.5.0
-
-ARG SPARK_DEFAULTS_CONF=spark-defaults.conf
+ENV SPARK_VERSION=3.5.4
 
 RUN curl https://dlcdn.apache.org/spark/spark-${SPARK_VERSION}/spark-${SPARK_VERSION}-bin-hadoop3.tgz -o spark-${SPARK_VERSION}-bin-hadoop3.tgz \
  && tar xvzf spark-${SPARK_VERSION}-bin-hadoop3.tgz --directory ${SPARK_HOME} --strip-components 1 \
  && rm -rf spark-${SPARK_VERSION}-bin-hadoop3.tgz
-
 
 
 FROM spark-base as pyspark-base
@@ -52,9 +49,6 @@ ENV SPARK_MASTER_HOST spark-iceberg
 ENV SPARK_MASTER_PORT 7077
 ENV PYSPARK_PYTHON python3
 
-# Copy the default configurations into $SPARK_HOME/conf
-#COPY spark-defaults.conf "$SPARK_HOME/conf"
-COPY ${SPARK_DEFAULTS_CONF} "$SPARK_HOME/conf/spark-defaults.conf"
 
 RUN chmod u+x ${SPARK_HOME}/sbin/* && \
     chmod u+x ${SPARK_HOME}/bin/*
@@ -64,10 +58,11 @@ COPY entrypoint.sh .
 
 ENTRYPOINT ["./entrypoint.sh"]
 
+# spark-iceberg-base install all required packages
+FROM pyspark as spark-iceberg-base
 
-FROM pyspark as spark-iceberg
-
-ARG SPARK_MAJOR_VERSION=3.5
+# Extract the major version from SPARK_VERSION
+ARG SPARK_MAJOR_VERSION=${SPARK_VERSION%.*}
 ARG ICEBERG_VERSION=1.4.3
 ARG ICEBERG_SPARK_SCALA="iceberg-spark-runtime-${SPARK_MAJOR_VERSION}_2.12"
 ARG JAR_PACKAGE="${ICEBERG_SPARK_SCALA}-${ICEBERG_VERSION}.jar"
@@ -97,19 +92,36 @@ RUN curl "https://jdbc.postgresql.org/download/postgresql-42.6.0.jar" -o "postgr
 RUN curl -s https://repo1.maven.org/maven2/org/apache/hadoop/hadoop-aws/3.3.3/hadoop-aws-3.3.3.jar -Lo ${SPARK_HOME}/jars/hadoop-aws-3.3.3.jar \
  && curl -s https://repo1.maven.org/maven2/com/amazonaws/aws-java-sdk-bundle/1.11.901/aws-java-sdk-bundle-1.11.901.jar -Lo ${SPARK_HOME}/jars/aws-java-sdk-bundle-1.11.901.jar
 
+# install jupyterlab and ijava. we have it running inside spark-master container
+ARG jupyterlab_version=4.0.8
+RUN apt-get update -y && \
+     apt-get install -y python3-pip python3-dev && \
+     pip3 install --upgrade pip && \
+     pip3 install wget jupyterlab==${jupyterlab_version}
+ 
 
+# config the spark-iceberg images     
+FROM spark-iceberg-base as spark-iceberg
 
-    # Add iceberg spark runtime jar to IJava classpath
+# Add iceberg spark runtime jar to IJava classpath, it's jupter kernel for running java
 ENV IJAVA_CLASSPATH=${SPARK_HOME}/jars/*
 
+#=============== Temp Debug start, delete the whole section after debug =========
+# the ke-jars folder is used to add customized jars, 
+# then we can add volume map in docker-compose file 
+#================================================================================
+RUN mkdir -p ${SPARK_HOME}/ke-jars
+ENV IJAVA_CLASSPATH=${SPARK_HOME}/ke-jars:${IJAVA_CLASSPATH}
+ENV SPARK_CLASSPATH=${SPARK_HOME}/ke-jars:${SPARK_CLASSPATH}
+ENV PYSPARK_SUBMIT_ARGS="--jars ${SPARK_HOME}/ke-jars/* pyspark-shell"
+
+# RUN rm ${SPARK_HOME}/jars/iceberg-spark-runtime-3.5_2.12-1.4.3.jar
+
+# COPY ./iceberg-spark-runtime-3.5_2.12*.jar "${SPARK_HOME}/jars/iceberg-spark-runtime-3.5_2.12-1.4.3-ke.jar"
+#=============== Temp Debug end =========
+
+
 RUN mkdir -p /home/iceberg/localwarehouse /home/iceberg/notebooks /home/iceberg/warehouse /home/iceberg/spark-events /home/iceberg
-
-ARG jupyterlab_version=4.0.8
-
-RUN apt-get update -y && \
-    apt-get install -y python3-pip python3-dev && \
-    pip3 install --upgrade pip && \
-    pip3 install wget jupyterlab==${jupyterlab_version}
 
 # Add a notebook command
 RUN echo '#! /bin/sh' >> /bin/notebook \

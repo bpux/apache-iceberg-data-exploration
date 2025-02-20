@@ -36,7 +36,7 @@ stop-iceberg-minio:
 	docker compose -f docker-compose.yml -f docker-compose-minio.yml stop
 
 run-iceberg-minio:
-	make stop-iceberg-minio && docker compose -f docker-compose.yml -f docker-compose-minio.yml up
+	make stop-iceberg-minio && docker compose -f docker-compose.yml -f docker-compose-minio.yml up --build
 
 build-services-spark-iceberg-minio:
 	docker compose -f docker-compose.yml -f docker-compose-minio.yml build minio-s3 spark-iceberg spark-worker spark-history-server --no-cache
