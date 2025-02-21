@@ -1,4 +1,4 @@
-FROM python:3.11-bullseye as spark-base
+FROM python:3.11-bullseye AS pyspark-base
 
 # Install tools required by the OS
 RUN apt-get update && \
@@ -31,16 +31,9 @@ RUN curl https://dlcdn.apache.org/spark/spark-${SPARK_VERSION}/spark-${SPARK_VER
  && tar xvzf spark-${SPARK_VERSION}-bin-hadoop3.tgz --directory ${SPARK_HOME} --strip-components 1 \
  && rm -rf spark-${SPARK_VERSION}-bin-hadoop3.tgz
 
-
-FROM spark-base as pyspark-base
-
 # Install python deps
 COPY requirements/requirements.txt .
 RUN pip3 install -r requirements.txt
-
-
-
-FROM pyspark-base as pyspark
 
 # Setup Spark related environment variables
 ENV PATH="${SPARK_HOME}/sbin:${SPARK_HOME}/bin:${PATH}"
@@ -53,13 +46,9 @@ ENV PYSPARK_PYTHON python3
 RUN chmod u+x ${SPARK_HOME}/sbin/* && \
     chmod u+x ${SPARK_HOME}/bin/*
 
-# Copy appropriate entrypoint script
-COPY entrypoint.sh .
-
-ENTRYPOINT ["./entrypoint.sh"]
 
 # spark-iceberg-base install all required packages
-FROM pyspark as spark-iceberg-base
+FROM pyspark-base AS spark-iceberg-base
 
 # Extract the major version from SPARK_VERSION
 ARG SPARK_MAJOR_VERSION=${SPARK_VERSION%.*}
@@ -101,7 +90,7 @@ RUN apt-get update -y && \
  
 
 # config the spark-iceberg images     
-FROM spark-iceberg-base as spark-iceberg
+FROM spark-iceberg-base AS spark-iceberg
 
 # Add iceberg spark runtime jar to IJava classpath, it's jupter kernel for running java
 ENV IJAVA_CLASSPATH=${SPARK_HOME}/jars/*
@@ -131,6 +120,7 @@ RUN echo '#! /bin/sh' >> /bin/notebook \
  && echo 'pyspark' >> /bin/notebook \
  && chmod u+x /bin/notebook
 
-
+# Copy appropriate entrypoint script
+COPY entrypoint.sh .
 ENTRYPOINT ["./entrypoint.sh"]
 CMD ["notebook"]

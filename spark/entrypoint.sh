@@ -8,7 +8,7 @@ if [ "$SPARK_WORKLOAD" == "master" ];
 then
   start-master.sh -p 7077
 
-  eval notebook
+  #eval notebook
 elif [ "$SPARK_WORKLOAD" == "worker" ];
 then
   WORKER_PORT=${2:-8081}
@@ -18,4 +18,14 @@ then
 elif [ "$SPARK_WORKLOAD" == "history" ]
 then
   start-history-server.sh
+
+elif [ "$SPARK_WORKLOAD" == "notebook" ]; then
+  export PYSPARK_DRIVER_PYTHON=jupyter
+  export PYSPARK_DRIVER_PYTHON_OPTS="lab --notebook-dir=/home/iceberg/notebooks --ip='0.0.0.0' --NotebookApp.token='' --port=8888 --no-browser --allow-root"
+  exec pyspark --master local
+else
+  echo "Unknown SPARK_WORKLOAD: $SPARK_WORKLOAD"
 fi
+
+# Keep the container running. debug only
+#tail -f /dev/null

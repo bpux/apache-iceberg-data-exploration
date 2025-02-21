@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   spark-iceberg:
     image: spark-iceberg
@@ -8,15 +6,18 @@ services:
     entrypoint: ['./entrypoint.sh', 'master' ]
     env_file:
       - spark/.env
+    environment:
+      - SPARK_NO_DAEMONIZE=true # run spark in the frontground. so the container keep running and not quite
     volumes:
       - ./spark/spark-defaults.conf:/opt/spark/conf/spark-defaults.conf #mount default config file 
-      - ./data/spark-master-warehouse:/home/iceberg/warehouse
+      - ./data/data-warehouse:/home/iceberg/warehouse
+      - ./dev-test:/opt/spark/dev-test # test codebased      
       - ./notebooks:/home/iceberg/notebooks
       - ./data/spark-master-data:/opt/spark/data
+      - ./data/spark-master-logs:/opt/spark/logs
       - ./data/spark_master-apps:/opt/spark/apps
-      - ./data/spark-master-logs:/opt/spark/spark-events
+      - ./data/spark-master-events:/opt/spark/spark-events
     ports:
-      - '8888:8888'
       - '8080:8080'
       - '10000:10000'
       - '10001:10001'
@@ -35,10 +36,11 @@ services:
       - SPARK_NO_DAEMONIZE=true
     volumes:
       - ./spark/spark-defaults.conf:/opt/spark/conf/spark-defaults.conf #mount default config file     
+      - ./data/data-warehouse:/home/iceberg/warehouse
       - ./data/spark-worker-data:/opt/spark/data
-      - ./data/spark-worker-warehouse:/home/iceberg/warehouse
       - ./data/spark-worker-apps:/opt/spark/apps
-      - ./data/spark-worker-logs:/opt/spark/spark-events
+      - ./data/spark-worker-logs:/opt/spark/logs
+      - ./data/spark-worker-events:/opt/spark/spark-events
     ports:
       - '8081:8081'
 
@@ -54,10 +56,30 @@ services:
       - SPARK_NO_DAEMONIZE=true
     volumes:
       - ./spark/spark-defaults.conf:/opt/spark/conf/spark-defaults.conf #mount default config file     
-      - ./data/spark-history-logs:/opt/spark/spark-events
+      - ./data/data-warehouse:/home/iceberg/warehouse      
+      - ./data/spark-history-data:/opt/spark/data
+      - ./data/spark-history-apps:/opt/spark/apps
+      - ./data/spark-history-logs:/opt/spark/logs
+      - ./data/spark-history-events:/opt/spark/spark-events
     ports:
       - '18080:18080'
 
-
+  jupyter-notebook:
+    image: spark-iceberg
+    container_name: jupyter-notebook
+    entrypoint: ['./entrypoint.sh', 'notebook']
+    depends_on:
+      - spark-iceberg
+    env_file:
+      - spark/.env
+    volumes:
+      - ./notebooks:/home/iceberg/notebooks  # Mount notebooks directory
+      - ./data/data-warehouse:/home/iceberg/warehouse
+      - ./spark/spark-defaults.conf:/opt/spark/conf/spark-defaults.conf #mount default config file     
+      - ./data/jupyter-apps:/opt/spark/apps
+      - ./data/jupyter-logs:/opt/spark/logs
+      - ./data/jupyter-events:/opt/spark/spark-events
+    ports:
+      - '8888:8888'
 #volumes:
 #  spark-logs:

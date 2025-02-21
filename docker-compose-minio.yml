@@ -1,4 +1,3 @@
-version: '3.8'
 
 services:
   pg-catalog:
@@ -92,23 +91,13 @@ services:
     networks:
       iceberg-net:
 
-
-  iceberg-rest:
-    image: tabulario/iceberg-rest
-    container_name: iceberg-rest
-    environment:
-      - ICEBERG_CATALOG_NAME=data
-      - ICEBERG_CATALOG_TYPE=jdbc
-      - ICEBERG_CATALOG_URI=jdbc:postgresql://pg-catalog:5432/kxuiceberg
-      - ICEBERG_CATALOG_JDBC_USER=kxuiceberg
-      - ICEBERG_CATALOG_JDBC_PASSWORD=kxuiceberg
-    ports:
-      - '8181:8181'
+  jupyter-notebook:
+    volumes:
+      - ./spark/spark-defaults-minio.conf:/opt/spark/conf/spark-defaults.conf #mount default config file   
+      - ./log4j.properties:/opt/spark/conf/log4j.properties # mount log4j properties file
     networks:
       iceberg-net:
-    depends_on:
-      - spark-iceberg
-      - pg-catalog
+
 #volumes:
 #  minio-s3-data:
 
