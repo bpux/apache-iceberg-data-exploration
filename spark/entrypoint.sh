@@ -22,7 +22,8 @@ then
 elif [ "$SPARK_WORKLOAD" == "notebook" ]; then
   export PYSPARK_DRIVER_PYTHON=jupyter
   export PYSPARK_DRIVER_PYTHON_OPTS="lab --notebook-dir=/home/iceberg/notebooks --ip='0.0.0.0' --NotebookApp.token='' --port=8888 --no-browser --allow-root"
-  exec pyspark --master local
+  #start pyspark with jupyter lab, set max core to 2
+  exec pyspark --master spark://spark-iceberg:7077 --conf spark.cores.max=2
 else
   echo "Unknown SPARK_WORKLOAD: $SPARK_WORKLOAD"
 fi

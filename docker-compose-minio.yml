@@ -68,7 +68,6 @@ services:
       context: ./spark
     volumes:
       - ./spark/spark-defaults-minio.conf:/opt/spark/conf/spark-defaults.conf #mount default config file   
-      - ./log4j.properties:/opt/spark/conf/log4j.properties # mount log4j properties file
     networks:
       iceberg-net:
     depends_on:
@@ -80,21 +79,18 @@ services:
   spark-worker:
     volumes:
       - ./spark/spark-defaults-minio.conf:/opt/spark/conf/spark-defaults.conf #mount default config file   
-      - ./log4j.properties:/opt/spark/conf/log4j.properties # mount log4j properties file
     networks:
       iceberg-net:
 
   spark-history-server:
     volumes:
       - ./spark/spark-defaults-minio.conf:/opt/spark/conf/spark-defaults.conf #mount default config file   
-      - ./log4j.properties:/opt/spark/conf/log4j.properties # mount log4j properties file
     networks:
       iceberg-net:
 
   jupyter-notebook:
     volumes:
       - ./spark/spark-defaults-minio.conf:/opt/spark/conf/spark-defaults.conf #mount default config file   
-      - ./log4j.properties:/opt/spark/conf/log4j.properties # mount log4j properties file
     networks:
       iceberg-net:
 

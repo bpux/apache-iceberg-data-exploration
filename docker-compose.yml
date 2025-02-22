@@ -17,6 +17,7 @@ services:
       - ./data/spark-master-logs:/opt/spark/logs
       - ./data/spark_master-apps:/opt/spark/apps
       - ./data/spark-master-events:/opt/spark/spark-events
+      - ./log4j2.properties:/opt/spark/conf/log4j2.properties # mount log4j properties file      
     ports:
       - '8080:8080'
       - '10000:10000'
@@ -41,6 +42,7 @@ services:
       - ./data/spark-worker-apps:/opt/spark/apps
       - ./data/spark-worker-logs:/opt/spark/logs
       - ./data/spark-worker-events:/opt/spark/spark-events
+      - ./log4j2.properties:/opt/spark/conf/log4j2.properties # mount log4j properties file      
     ports:
       - '8081:8081'
 
@@ -61,6 +63,8 @@ services:
       - ./data/spark-history-apps:/opt/spark/apps
       - ./data/spark-history-logs:/opt/spark/logs
       - ./data/spark-history-events:/opt/spark/spark-events
+      - ./data/spark-history-events:/tmp/spark-events # Ensure the log directory is mounted
+      - ./log4j2.properties:/opt/spark/conf/log4j2.properties # mount log4j properties file      
     ports:
       - '18080:18080'
 
@@ -79,6 +83,7 @@ services:
       - ./data/jupyter-apps:/opt/spark/apps
       - ./data/jupyter-logs:/opt/spark/logs
       - ./data/jupyter-events:/opt/spark/spark-events
+      - ./log4j2.properties:/opt/spark/conf/log4j2.properties # mount log4j properties file      
     ports:
       - '8888:8888'
 #volumes:
