@@ -1,21 +1,5 @@
 
 services:
-  pg-catalog:
-    image: postgres:17.3
-    container_name: pg_catalog
-    networks:
-      iceberg-net:
-    environment:
-      - POSTGRES_USER=kxuiceberg
-      - POSTGRES_PASSWORD=kxuiceberg
-      - POSTGRES_DB=kxuiceberg
-    healthcheck:
-      test: [ "CMD", "pg_isready", "-U", "kxuiceberg" ]
-      interval: 5s
-      retries: 5
-    ports:
-      - "5432:5432"
-
   minio-s3:
     #image: minio/minio:RELEASE.2024-12-18T13-15-44Z
     image: minio/minio:RELEASE.2025-02-07T23-21-09Z-cpuv1
@@ -71,8 +55,6 @@ services:
     networks:
       iceberg-net:
     depends_on:
-      pg-catalog:
-        condition: service_healthy
       minio-s3-init:
         condition: service_completed_successfully
 

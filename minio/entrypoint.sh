@@ -42,7 +42,7 @@ else
     echo "$file" and "$bucket"
 
     /usr/bin/mc mb "minios3/$bucket"
-    mc stat --json minios3/iceberg-data
+    mc stat --json minios3/$bucket
 
     if [ -n "${file}" ]
     then

@@ -11,6 +11,7 @@ RUN apt-get update && \
       build-essential \
       software-properties-common \
       telnet \
+      rsync \
       ssh && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
@@ -27,7 +28,7 @@ WORKDIR ${SPARK_HOME}
 # Download and install Spark
 ENV SPARK_VERSION=3.5.4
 
-RUN curl https://dlcdn.apache.org/spark/spark-${SPARK_VERSION}/spark-${SPARK_VERSION}-bin-hadoop3.tgz -o spark-${SPARK_VERSION}-bin-hadoop3.tgz \
+RUN curl https://archive.apache.org/dist/spark/spark-${SPARK_VERSION}/spark-${SPARK_VERSION}-bin-hadoop3.tgz -o spark-${SPARK_VERSION}-bin-hadoop3.tgz \
  && tar xvzf spark-${SPARK_VERSION}-bin-hadoop3.tgz --directory ${SPARK_HOME} --strip-components 1 \
  && rm -rf spark-${SPARK_VERSION}-bin-hadoop3.tgz
 
@@ -47,14 +48,14 @@ RUN chmod u+x ${SPARK_HOME}/sbin/* && \
     chmod u+x ${SPARK_HOME}/bin/*
 
 
-# spark-iceberg-base install all required packages
+# spark-iceberg-base install basic required packages, like AWS, Iceberg, etc..
 FROM pyspark-base AS spark-iceberg-base
 
 # Extract the major version from SPARK_VERSION
 ARG SPARK_MAJOR_VERSION=${SPARK_VERSION%.*}
 ARG ICEBERG_VERSION=1.4.3
-ARG ICEBERG_SPARK_SCALA="iceberg-spark-runtime-${SPARK_MAJOR_VERSION}_2.12"
-ARG JAR_PACKAGE="${ICEBERG_SPARK_SCALA}-${ICEBERG_VERSION}.jar"
+ARG ICEBERG_SPARK_SCALA="${SPARK_MAJOR_VERSION}_2.12"
+ARG JAR_PACKAGE="iceberg-spark-runtime-${ICEBERG_SPARK_SCALA}-${ICEBERG_VERSION}.jar"
 
 # Download iceberg spark runtime
 RUN curl https://repo1.maven.org/maven2/org/apache/iceberg/${ICEBERG_SPARK_SCALA}/${ICEBERG_VERSION}/${JAR_PACKAGE} -Lo ${SPARK_HOME}/jars/${JAR_PACKAGE}
@@ -70,11 +71,6 @@ RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2
  && rm awscliv2.zip \
  && rm -rf aws/
 
-
-# Install PostgreSQL JDBC Driver, we use postgresql as our metastore
-RUN curl "https://jdbc.postgresql.org/download/postgresql-42.6.0.jar" -o "postgresql-42.6.0.jar" \
-    && mv postgresql-42.6.0.jar "${SPARK_HOME}/jars/postgresql-42.6.0.jar"
-
 # Download Hadoop AWS and AWS SDK JARs. 
 # These are needed for the Hadoop AWS module to work for AWS S3 access
 # when we use localstack as the S3 endpoint
@@ -88,9 +84,19 @@ RUN apt-get update -y && \
      pip3 install --upgrade pip && \
      pip3 install wget jupyterlab==${jupyterlab_version}
  
-
 # config the spark-iceberg images     
-FROM spark-iceberg-base AS spark-iceberg
+FROM spark-iceberg-base AS spark-iceberg-plugins
+
+########### install requried 3rd party catalog jars ##################
+# Install PostgreSQL JDBC Driver, we use postgresql as our metastore
+RUN curl "https://repo1.maven.org/maven2/org/postgresql/postgresql/42.7.5/postgresql-42.7.5.jar" -o "postgresql-42.7.5.jar" \
+    && mv postgresql-42.7.5.jar "${SPARK_HOME}/jars/postgresql-42.7.5.jar"
+
+RUN curl "https://repo1.maven.org/maven2/org/projectnessie/nessie-integrations/nessie-spark-extensions-${ICEBERG_SPARK_SCALA}/0.103.0/nessie-spark-extensions-${ICEBERG_SPARK_SCALA}-0.103.0.jar" -o "nessie-spark-extensions-${ICEBERG_SPARK_SCALA}.jar" \
+    && mv nessie-spark-extensions-${ICEBERG_SPARK_SCALA}.jar "${SPARK_HOME}/jars/nessie-spark-extensions-${ICEBERG_SPARK_SCALA}.jar"
+
+# config the spark-iceberg images, final touches.. should be configs at here only 
+FROM spark-iceberg-plugins AS spark-iceberg
 
 # Add iceberg spark runtime jar to IJava classpath, it's jupter kernel for running java
 ENV IJAVA_CLASSPATH=${SPARK_HOME}/jars/*
