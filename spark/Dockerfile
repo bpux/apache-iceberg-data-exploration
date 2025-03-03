@@ -26,8 +26,7 @@ WORKDIR ${SPARK_HOME}
 
 # Download and install Spark
 ENV SPARK_VERSION=3.5.4
-
-RUN curl https://dlcdn.apache.org/spark/spark-${SPARK_VERSION}/spark-${SPARK_VERSION}-bin-hadoop3.tgz -o spark-${SPARK_VERSION}-bin-hadoop3.tgz \
+RUN curl https://archive.apache.org/dist/spark/spark-${SPARK_VERSION}/spark-${SPARK_VERSION}-bin-hadoop3.tgz -o spark-${SPARK_VERSION}-bin-hadoop3.tgz \
  && tar xvzf spark-${SPARK_VERSION}-bin-hadoop3.tgz --directory ${SPARK_HOME} --strip-components 1 \
  && rm -rf spark-${SPARK_VERSION}-bin-hadoop3.tgz
 
