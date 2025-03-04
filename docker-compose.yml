@@ -1,6 +1,6 @@
 services:
   spark-iceberg:
-    image: spark-iceberg
+    image: spark-iceberg:25-03-03-16-42
     container_name: spark-iceberg
     build: ./spark
     entrypoint: ['./entrypoint.sh', 'master' ]
@@ -13,10 +13,10 @@ services:
       - ./data/data-warehouse:/home/iceberg/warehouse
       - ./dev-test:/opt/spark/dev-test # test codebased      
       - ./notebooks:/home/iceberg/notebooks
-      - ./data/spark-master-data:/opt/spark/data
-      - ./data/spark-master-logs:/opt/spark/logs
-      - ./data/spark_master-apps:/opt/spark/apps
-      - ./data/spark-master-events:/opt/spark/spark-events
+      - ./data/spark-master/data:/opt/spark/data
+      - ./data/spark-master/logs:/opt/spark/logs
+      - ./data/spark_master/apps:/opt/spark/apps
+      - ./data/spark-master/events:/opt/spark/spark-events
       - ./log4j2.properties:/opt/spark/conf/log4j2.properties # mount log4j properties file      
     ports:
       - '8080:8080'
@@ -26,7 +26,7 @@ services:
 
 
   spark-worker:
-    image: spark-iceberg
+    image: spark-iceberg:25-03-03-16-42
     container_name: spark-worker
     entrypoint: [ './entrypoint.sh', 'worker' ]
     depends_on:
@@ -38,17 +38,17 @@ services:
     volumes:
       - ./spark/spark-defaults.conf:/opt/spark/conf/spark-defaults.conf #mount default config file     
       - ./data/data-warehouse:/home/iceberg/warehouse
-      - ./data/spark-worker-data:/opt/spark/data
-      - ./data/spark-worker-apps:/opt/spark/apps
-      - ./data/spark-worker-logs:/opt/spark/logs
-      - ./data/spark-worker-events:/opt/spark/spark-events
+      - ./data/spark-worker/data:/opt/spark/data
+      - ./data/spark-worker/apps:/opt/spark/apps
+      - ./data/spark-worker/logs:/opt/spark/logs
+      - ./data/spark-worker/events:/opt/spark/spark-events
       - ./log4j2.properties:/opt/spark/conf/log4j2.properties # mount log4j properties file      
     ports:
       - '8081:8081'
 
   spark-history-server:
     container_name: spark-history
-    image: spark-iceberg
+    image: spark-iceberg:25-03-03-16-42
     entrypoint: [ './entrypoint.sh', 'history' ]
     depends_on:
       - spark-iceberg
@@ -59,17 +59,17 @@ services:
     volumes:
       - ./spark/spark-defaults.conf:/opt/spark/conf/spark-defaults.conf #mount default config file     
       - ./data/data-warehouse:/home/iceberg/warehouse      
-      - ./data/spark-history-data:/opt/spark/data
-      - ./data/spark-history-apps:/opt/spark/apps
-      - ./data/spark-history-logs:/opt/spark/logs
-      - ./data/spark-history-events:/opt/spark/spark-events
-      - ./data/spark-history-events:/tmp/spark-events # Ensure the log directory is mounted
+      - ./data/spark-history/data:/opt/spark/data
+      - ./data/spark-history/apps:/opt/spark/apps
+      - ./data/spark-history/logs:/opt/spark/logs
+      - ./data/spark-history/events:/opt/spark/spark-events
+      - ./data/spark-history/events:/tmp/spark-events # Ensure the log directory is mounted
       - ./log4j2.properties:/opt/spark/conf/log4j2.properties # mount log4j properties file      
     ports:
       - '18080:18080'
 
   jupyter-notebook:
-    image: spark-iceberg
+    image: spark-iceberg:25-03-03-16-42
     container_name: jupyter-notebook
     entrypoint: ['./entrypoint.sh', 'notebook']
     depends_on:
@@ -80,9 +80,9 @@ services:
       - ./notebooks:/home/iceberg/notebooks  # Mount notebooks directory
       - ./data/data-warehouse:/home/iceberg/warehouse
       - ./spark/spark-defaults.conf:/opt/spark/conf/spark-defaults.conf #mount default config file     
-      - ./data/jupyter-apps:/opt/spark/apps
-      - ./data/jupyter-logs:/opt/spark/logs
-      - ./data/jupyter-events:/opt/spark/spark-events
+      - ./data/jupyter/apps:/opt/spark/apps
+      - ./data/jupyter/logs:/opt/spark/logs
+      - ./data/jupyter/events:/opt/spark/spark-events
       - ./log4j2.properties:/opt/spark/conf/log4j2.properties # mount log4j properties file      
     ports:
       - '8888:8888'

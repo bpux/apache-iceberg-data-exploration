@@ -58,7 +58,7 @@ ARG ICEBERG_SPARK_SCALA="${SPARK_MAJOR_VERSION}_2.12"
 ARG JAR_PACKAGE="iceberg-spark-runtime-${ICEBERG_SPARK_SCALA}-${ICEBERG_VERSION}.jar"
 
 # Download iceberg spark runtime
-RUN curl https://repo1.maven.org/maven2/org/apache/iceberg/${ICEBERG_SPARK_SCALA}/${ICEBERG_VERSION}/${JAR_PACKAGE} -Lo ${SPARK_HOME}/jars/${JAR_PACKAGE}
+RUN curl https://repo1.maven.org/maven2/org/apache/iceberg/iceberg-spark-runtime-${ICEBERG_SPARK_SCALA}/${ICEBERG_VERSION}/${JAR_PACKAGE} -Lo ${SPARK_HOME}/jars/${JAR_PACKAGE}
 
 # Download Java AWS bundle
 # RUN curl https://repo1.maven.org/maven2/software/amazon/awssdk/bundle/2.17.257/bundle-2.17.257.jar -Lo ${SPARK_HOME}/jars/bundle-2.17.257.jar

@@ -41,15 +41,13 @@ services:
       - MINIO_ROOT_USER=user
       - MINIO_ROOT_PASSWORD=password
       - COPY_DIR=false
-      - INPUT_BUCKETS=kxu-iceberg-data
+      - INPUT_BUCKETS=kxu-iceberg-data,kxu-catalog-data
     depends_on:
       - minio-s3
     entrypoint: /bin/sh ./entrypoint.sh
 
 
   spark-iceberg:
-    build:
-      context: ./spark
     volumes:
       - ./spark/spark-defaults-minio.conf:/opt/spark/conf/spark-defaults.conf #mount default config file   
     networks:

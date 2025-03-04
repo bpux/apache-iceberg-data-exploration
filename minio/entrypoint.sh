@@ -20,6 +20,7 @@ then
   /usr/bin/mc mb "minios3/$bucket";
   /usr/bin/mc mirror /data/ "minios3/$bucket";
 else
+  #buckets=("bucket1" "bucket2" "bucket3")
   buckets=( $(echo $INPUT_BUCKETS | tr "," " ") )
   copy_data=( $(echo $COPY_DATA | tr "," " ") )
 
