@@ -1,4 +1,6 @@
 .idea
 .DS_Store
-/warehouse/
+/data/
 helper_scripts/*.json
+.vscode/
+.venv/
