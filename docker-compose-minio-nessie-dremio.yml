@@ -1,0 +1,71 @@
+
+services:
+  # Nessie Catalog Server Using In-Memory Store
+  nessie:
+    image: ghcr.io/projectnessie/nessie:0.102.5-java
+    platform: linux/amd64
+    container_name: nessie  
+    networks:
+      iceberg-net:
+    ports:
+      - 19120:19120
+
+  minio-s3:
+    networks:
+      iceberg-net:
+
+  minio-s3-init:
+    networks:
+      iceberg-net:
+
+  spark-iceberg:
+    volumes:
+      - ./spark/spark-defaults-minio-nessie-catalog.conf:/opt/spark/conf/spark-defaults.conf #mount default config file   
+    networks:
+      iceberg-net:
+    depends_on:
+      - minio-s3-init
+
+  spark-worker:
+    volumes:
+      - ./spark/spark-defaults-minio-nessie-catalog.conf:/opt/spark/conf/spark-defaults.conf #mount default config file   
+    networks:
+      iceberg-net:
+
+  spark-history-server:
+    volumes:
+      - ./spark/spark-defaults-minio-nessie-catalog.conf:/opt/spark/conf/spark-defaults.conf #mount default config file   
+    networks:
+      iceberg-net:
+
+  jupyter-notebook:
+    volumes:
+      - ./spark/spark-defaults-minio-nessie-catalog.conf:/opt/spark/conf/spark-defaults.conf #mount default config file   
+    networks:
+      iceberg-net:
+
+  dremio:
+  # Dremio, UI for querying data across different data sources and with git like approach to data versioning
+    platform: linux/x86_64
+    image: dremio/dremio-oss:25.2
+    logging: # too many logs coming from it
+      driver: "none"
+    ports:
+      - 9047:9047
+      - 31010:31010
+      - 32010:32010
+    container_name: dremio
+    volumes:
+      - ./dremio-logback.xml:/opt/dremio/conf/logback.xml #mount modified log file
+    environment:
+      - DREMIO_JAVA_SERVER_EXTRA_OPTS=-Dpaths.dist=file:///opt/dremio/data/dist
+      - DREMIO_GC_LOGS_ENABLED=no  # Disable GC logs on console
+
+    networks:
+      iceberg-net:
+
+#volumes:
+#  minio-s3-data:
+
+networks:
+  iceberg-net:
