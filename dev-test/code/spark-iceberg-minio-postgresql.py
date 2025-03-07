@@ -58,7 +58,7 @@ def run_spark_job():
         .config("spark.hadoop.fs.s3a.path.style.access", "true") \
         .config("spark.hadoop.fs.s3a.impl", "org.apache.hadoop.fs.s3a.S3AFileSystem") \
         .config("spark.sql.catalog.data", "org.apache.iceberg.spark.SparkCatalog") \
-        .config("spark.sql.catalog.data.warehouse", "s3a://kxu-iceberg-data") \
+        .config("spark.sql.catalog.data.warehouse", "s3a://kxu-iceberg-data/pg-catalog") \
         .config("spark.sql.catalog.data.s3.endpoint", "http://minio-s3:9000") \
         .config("spark.sql.catalog.data.io-impl", "org.apache.iceberg.aws.s3.S3FileIO") \
         .config("spark.sql.catalog.data.catalog-impl", "org.apache.iceberg.jdbc.JdbcCatalog") \
@@ -73,11 +73,13 @@ def run_spark_job():
     df.show()
     logger.info("\n=======================================================\n")
 
+    table_name = "input_data_test_pg_catalog"
+    nsamespace = "data.db"
     # Step 2: Save as Iceberg table
-    df.writeTo("data.db.input_data").createOrReplace()
+    df.writeTo(f"{namespace}.{table_name}").createOrReplace()
 
     # Step 3: Read the data and print out
-    iceberg_df = spark.read.format("iceberg").load("data.db.input_data")
+    iceberg_df = spark.read.format("iceberg").load(f"{namespace}.{table_name}")
     logger.info("\n==================Iceberg Table Data:==================\n")
     iceberg_df.show()
     logger.info("\n=======================================================\n")
@@ -85,10 +87,10 @@ def run_spark_job():
     # Step 4: Add another row to the table
     new_data = [("New James", "Smith")]
     df = spark.createDataFrame(data=new_data, schema=iceberg_df.schema)
-    df.writeTo("data.db.input_data").append()
+    df.writeTo(f"{namespace}.{table_name}").append()
 
     # Read the data again and print out
-    updated_iceberg_df = spark.read.format("iceberg").load("data.db.input_data")
+    updated_iceberg_df = spark.read.format("iceberg").load(f"{namespace}.{table_name}")
     logger.info("\n==================Iceberg Table Data:==================\n")
     updated_iceberg_df.show()
     logger.info("\n=======================Test Completed and Success================================\n")

@@ -42,8 +42,9 @@ else
     echo "Printing file and bucket"
     echo "$file" and "$bucket"
 
-    /usr/bin/mc mb "minios3/$bucket"
-    mc stat --json minios3/$bucket
+    /usr/bin/mc mb "minios3/$bucket"    
+    /usr/bin/mc anonymous set public "minios3/$bucket"
+    mc stat --json "minios3/$bucket"
 
     if [ -n "${file}" ]
     then
