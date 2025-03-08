@@ -1,14 +1,55 @@
 
 services:
-  # Nessie Catalog Server Using In-Memory Store
+  pg-catalog:
+    image: postgres:17.3
+    container_name: pg_catalog
+    networks:
+      iceberg-net:
+    environment:
+      - POSTGRES_USER=kxuiceberg
+      - POSTGRES_PASSWORD=kxuiceberg
+      - POSTGRES_DB=kxuiceberg
+    healthcheck:
+      test: [ "CMD", "pg_isready", "-U", "kxuiceberg" ]
+      interval: 5s
+      retries: 5
+    ports:
+      - "5432:5432"
+
   nessie:
     image: ghcr.io/projectnessie/nessie:0.102.5-java
     platform: linux/amd64
     container_name: nessie  
+    environment:
+      # This example uses Postgres as the version store.
+      - nessie.version.store.type=JDBC
+      - nessie.version.store.persist.jdbc.datasource=postgresql
+      - quarkus.datasource.postgresql.jdbc.url=jdbc:postgresql://pg-catalog:5432/kxuiceberg
+      - quarkus.datasource.postgresql.username=kxuiceberg
+      - quarkus.datasource.postgresql.password=kxuiceberg
+      # Object store settings.
+      # This example uses MinIO as the object store.
+      - nessie.server.authentication.enabled=false
+      - nessie.catalog.default-warehouse=kxu-iceberg-data
+      - nessie.catalog.warehouses.kxu-iceberg-data.location=s3://kxu-iceberg-data
+      - nessie.catalog.service.s3.default-options.region=us-east-1
+      - nessie.catalog.service.s3.default-options.path-style-access=true
+      - nessie.catalog.service.s3.default-options.access-key=urn:nessie-secret:quarkus:nessie.catalog.secrets.access-key
+      - nessie.catalog.secrets.access-key.name=user
+      - nessie.catalog.secrets.access-key.secret=password
+      - nessie.catalog.service.s3.default-options.endpoint=http://minio-s3:9000/
+      - nessie.catalog.service.s3.default-options.external-endpoint=http://127.0.0.1:9001/
     networks:
       iceberg-net:
     ports:
       - 19120:19120
+    depends_on:
+      - pg-catalog
+    healthcheck:
+      test: "exec 3<>/dev/tcp/localhost/9000 && echo -e 'GET /q/health HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n' >&3 && cat <&3 | grep -q '200 OK'"
+      interval: 5s
+      timeout: 2s
+      retries: 15      
 
   minio-s3:
     networks:
@@ -48,19 +89,23 @@ services:
   # Dremio, UI for querying data across different data sources and with git like approach to data versioning
     platform: linux/x86_64
     image: dremio/dremio-oss:25.2
-    logging: # too many logs coming from it
-      driver: "none"
+    #logging: # too many logs coming from it
+    #  driver: "none"
     ports:
       - 9047:9047
       - 31010:31010
       - 32010:32010
     container_name: dremio
     volumes:
-      - ./dremio-logback.xml:/opt/dremio/conf/logback.xml #mount modified log file
+      - ./dremio-conf/dremio-logback.xml:/opt/dremio/conf/logback.xml #mount modified log file
+      - ./dremio-conf/dremio.conf:/opt/dremio/conf/dremio.conf #mount modified config file
+      - ./dremio-conf/dremio-core-site.xml:/opt/dremio/conf/core-site.xml #mount modified core-site file
     environment:
       - DREMIO_JAVA_SERVER_EXTRA_OPTS=-Dpaths.dist=file:///opt/dremio/data/dist
       - DREMIO_GC_LOGS_ENABLED=no  # Disable GC logs on console
-
+    depends_on:
+      - minio-s3
+      - nessie
     networks:
       iceberg-net:
 

@@ -14,7 +14,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-catalog_uri = "http://nessie:19120/api/v1"  # Nessie Server URI
+catalog_uri = "http://nessie:19120/api/v2"  # Nessie Server URI
 minio_endpoint = 'http://minio-s3:9000'  # Change to your MinIO endpoint if different
 minio_access_key = 'user'
 minio_secret_key = 'password'
@@ -59,7 +59,7 @@ def run_spark_job():
         .config("spark.hadoop.fs.s3a.path.style.access", "true") \
         .config("spark.hadoop.fs.s3a.impl", "org.apache.hadoop.fs.s3a.S3AFileSystem") \
         .config("spark.sql.catalog.data", "org.apache.iceberg.spark.SparkCatalog") \
-        .config("spark.sql.catalog.data.warehouse", "s3a://kxu-iceberg-data/nessie-catalog") \
+        .config("spark.sql.catalog.data.warehouse", "s3a://kxu-iceberg-data/nessie_bronze_data") \
         .config("spark.sql.catalog.data.s3.endpoint", "http://minio-s3:9000") \
         .config("spark.sql.catalog.data.io-impl", "org.apache.iceberg.aws.s3.S3FileIO") \
         .config("spark.sql.catalog.data.catalog-impl", "org.apache.iceberg.nessie.NessieCatalog") \
@@ -79,7 +79,7 @@ def run_spark_job():
     # Create the namespace if not exists, nessie required namespace to be created explicitly
     spark.sql("CREATE NAMESPACE if Not exists db")
     spark.sql("CREATE NAMESPACE if Not exists catalog")
-    
+
     # Step 2: Save as Iceberg table
     df.writeTo(f"{namespace}.{table_name}").createOrReplace()
 

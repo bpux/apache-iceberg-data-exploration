@@ -53,7 +53,7 @@ FROM pyspark-base AS spark-iceberg-base
 
 # Extract the major version from SPARK_VERSION
 ARG SPARK_MAJOR_VERSION=${SPARK_VERSION%.*}
-ARG ICEBERG_VERSION=1.4.3
+ARG ICEBERG_VERSION=1.8.1
 ARG ICEBERG_SPARK_SCALA="${SPARK_MAJOR_VERSION}_2.12"
 ARG JAR_PACKAGE="iceberg-spark-runtime-${ICEBERG_SPARK_SCALA}-${ICEBERG_VERSION}.jar"
 
@@ -74,8 +74,8 @@ RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2
 # Download Hadoop AWS and AWS SDK JARs. 
 # These are needed for the Hadoop AWS module to work for AWS S3 access
 # when we use localstack as the S3 endpoint
-RUN curl -s https://repo1.maven.org/maven2/org/apache/hadoop/hadoop-aws/3.3.3/hadoop-aws-3.3.3.jar -Lo ${SPARK_HOME}/jars/hadoop-aws-3.3.3.jar \
- && curl -s https://repo1.maven.org/maven2/com/amazonaws/aws-java-sdk-bundle/1.11.901/aws-java-sdk-bundle-1.11.901.jar -Lo ${SPARK_HOME}/jars/aws-java-sdk-bundle-1.11.901.jar
+RUN curl -s https://repo1.maven.org/maven2/org/apache/hadoop/hadoop-aws/3.4.1/hadoop-aws-3.4.1.jar -Lo ${SPARK_HOME}/jars/hadoop-aws-3.4.1.jar \
+&& curl -s https://repo1.maven.org/maven2/com/amazonaws/aws-java-sdk-bundle/1.12.782/aws-java-sdk-bundle-1.12.782.jar -Lo ${SPARK_HOME}/jars/aws-java-sdk-bundle-1.12.782.jar
 
 # install jupyterlab and ijava. we have it running inside spark-master container
 ARG jupyterlab_version=4.0.8
