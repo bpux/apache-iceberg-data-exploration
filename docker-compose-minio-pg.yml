@@ -47,12 +47,6 @@ services:
     networks:
       iceberg-net:
 
-  jupyter-notebook:
-    volumes:
-      - ./spark/spark-defaults-minio-pg-catalog.conf:/opt/spark/conf/spark-defaults.conf #mount default config file   
-    networks:
-      iceberg-net:
-
 #volumes:
 #  minio-s3-data:
 

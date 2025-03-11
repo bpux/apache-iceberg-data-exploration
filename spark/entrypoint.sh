@@ -6,9 +6,10 @@ echo "SPARK_WORKLOAD: $SPARK_WORKLOAD"
 
 if [ "$SPARK_WORKLOAD" == "master" ];
 then
-  start-master.sh -p 7077
-
-  #eval notebook
+  #start spark master in background
+  start-master.sh -p 7077 & 
+  #start jupter notebook, this will keep the container running
+  eval notebook
 elif [ "$SPARK_WORKLOAD" == "worker" ];
 then
   WORKER_PORT=${2:-8081}

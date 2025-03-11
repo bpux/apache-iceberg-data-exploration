@@ -74,8 +74,8 @@ RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2
 # Download Hadoop AWS and AWS SDK JARs. 
 # These are needed for the Hadoop AWS module to work for AWS S3 access
 # when we use localstack as the S3 endpoint
-RUN curl -s https://repo1.maven.org/maven2/org/apache/hadoop/hadoop-aws/3.4.1/hadoop-aws-3.4.1.jar -Lo ${SPARK_HOME}/jars/hadoop-aws-3.4.1.jar \
-&& curl -s https://repo1.maven.org/maven2/com/amazonaws/aws-java-sdk-bundle/1.12.782/aws-java-sdk-bundle-1.12.782.jar -Lo ${SPARK_HOME}/jars/aws-java-sdk-bundle-1.12.782.jar
+RUN curl -s https://repo1.maven.org/maven2/org/apache/hadoop/hadoop-aws/3.3.3/hadoop-aws-3.3.3.jar -Lo ${SPARK_HOME}/jars/hadoop-aws-3.3.3.jar \
+    && curl -s https://repo1.maven.org/maven2/com/amazonaws/aws-java-sdk-bundle/1.11.901/aws-java-sdk-bundle-1.11.901.jar -Lo ${SPARK_HOME}/jars/aws-java-sdk-bundle-1.11.901.jar
 
 # install jupyterlab and ijava. we have it running inside spark-master container
 ARG jupyterlab_version=4.0.8
@@ -123,7 +123,7 @@ RUN echo '#! /bin/sh' >> /bin/notebook \
  && echo 'export PYSPARK_DRIVER_PYTHON=jupyter' >> /bin/notebook \
  && echo "export PYSPARK_DRIVER_PYTHON_OPTS=\"lab --notebook-dir=/home/iceberg/notebooks --ip='0.0.0.0' --NotebookApp.token='' --port=8888 --no-browser --allow-root\"" >> /bin/notebook \
 # && echo 'pyspark --master local[*]' >> /bin/notebook \
- && echo 'pyspark' >> /bin/notebook \
+    && echo 'pyspark --conf spark.cores.max=2' >> /bin/notebook \
  && chmod u+x /bin/notebook
 
 # Copy appropriate entrypoint script

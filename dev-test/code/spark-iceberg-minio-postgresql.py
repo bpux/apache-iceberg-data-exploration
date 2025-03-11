@@ -1,7 +1,6 @@
 import os
 import pandas as pd
 import boto3
-import pyspark
 import logging
 from pyspark.sql import SparkSession
 from botocore.client import Config
@@ -58,8 +57,8 @@ def run_spark_job():
         .config("spark.hadoop.fs.s3a.path.style.access", "true") \
         .config("spark.hadoop.fs.s3a.impl", "org.apache.hadoop.fs.s3a.S3AFileSystem") \
         .config("spark.sql.catalog.data", "org.apache.iceberg.spark.SparkCatalog") \
-        .config("spark.sql.catalog.data.warehouse", "s3a://kxu-iceberg-data/pg-catalog") \
-        .config("spark.sql.catalog.data.s3.endpoint", "http://minio-s3:9000") \
+        .config("spark.sql.catalog.data.warehouse", f"s3a://{bucket_name}/pg-catalog") \
+        .config("spark.sql.catalog.data.s3.endpoint", minio_endpoint) \
         .config("spark.sql.catalog.data.io-impl", "org.apache.iceberg.aws.s3.S3FileIO") \
         .config("spark.sql.catalog.data.catalog-impl", "org.apache.iceberg.jdbc.JdbcCatalog") \
         .config("spark.sql.catalog.data.uri", "jdbc:postgresql://pg-catalog:5432/kxuiceberg") \
@@ -74,7 +73,7 @@ def run_spark_job():
     logger.info("\n=======================================================\n")
 
     table_name = "input_data_test_pg_catalog"
-    nsamespace = "data.db"
+    namespace = "data.db"
     # Step 2: Save as Iceberg table
     df.writeTo(f"{namespace}.{table_name}").createOrReplace()
 

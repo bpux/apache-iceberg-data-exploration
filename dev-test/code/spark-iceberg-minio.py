@@ -58,8 +58,8 @@ def run_spark_job():
         .config("spark.hadoop.fs.s3a.path.style.access", "true") \
         .config("spark.hadoop.fs.s3a.impl", "org.apache.hadoop.fs.s3a.S3AFileSystem") \
         .config("spark.sql.catalog.data", "org.apache.iceberg.spark.SparkCatalog") \
-        .config("spark.sql.catalog.data.warehouse", "s3a://kxu-iceberg-data/wh1") \
-        .config("spark.sql.catalog.data.s3.endpoint", "http://minio-s3:9000") \
+        .config("spark.sql.catalog.data.warehouse", f"s3a://{bucket_name}/wh1") \
+        .config("spark.sql.catalog.data.s3.endpoint", minio_endpoint) \
         .config("spark.sql.catalog.data.io-impl", "org.apache.iceberg.aws.s3.S3FileIO") \
         .config("spark.sql.catalog.default", "data") \
         .getOrCreate()
@@ -107,8 +107,8 @@ def run_spark_job_catalog2():
         .config("spark.hadoop.fs.s3a.path.style.access", "true") \
         .config("spark.hadoop.fs.s3a.impl", "org.apache.hadoop.fs.s3a.S3AFileSystem") \
         .config("spark.sql.catalog.data", "org.apache.iceberg.spark.SparkCatalog") \
-        .config("spark.sql.catalog.data.warehouse", "s3a://kxu-iceberg-data/silver-data") \
-        .config("spark.sql.catalog.data.s3.endpoint", "http://minio-s3:9000") \
+        .config("spark.sql.catalog.data.warehouse", f"s3a://{bucket_name}/silver-data") \
+        .config("spark.sql.catalog.data.s3.endpoint", minio_endpoint) \
         .config("spark.sql.catalog.data.io-impl", "org.apache.iceberg.aws.s3.S3FileIO") \
         .config("spark.sql.catalog.default", "data")  \
         .getOrCreate()
