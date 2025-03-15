@@ -4,7 +4,7 @@ import org.apache.spark.sql.SaveMode
 object IcebergExample {
   def main(args: Array[String]): Unit = {
     // Initialize Spark session
-    val spark = SparkSession.builder  .appName("IcebergExample").getOrCreate()
+    val spark = SparkSession.builder.appName("IcebergExample").getOrCreate()
 
     // Step 1: Read input-data.csv
     val df = spark.read.option("header", "true").option("inferSchema", "true").csv("s3a://kxu-iceberg-data/input-data.csv")

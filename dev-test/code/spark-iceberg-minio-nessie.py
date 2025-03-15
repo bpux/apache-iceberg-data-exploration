@@ -74,7 +74,7 @@ def run_spark_job():
     logger.info("\n=======================================================\n")
 
     table_name = "input_data_test_pg_catalog"
-    namespace = "data.db"
+    namespace = "db"
 
     # Create the namespace if not exists, nessie required namespace to be created explicitly
     spark.sql("CREATE NAMESPACE if Not exists db")

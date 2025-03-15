@@ -73,7 +73,8 @@ RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2
 
 # Download Hadoop AWS and AWS SDK JARs. 
 # These are needed for the Hadoop AWS module to work for AWS S3 access
-# when we use localstack as the S3 endpoint
+# when we use localstack as the S3 endpoint. 
+# use newer version has issues to access s3 "missing s3/model/ObjectTransfer??"
 RUN curl -s https://repo1.maven.org/maven2/org/apache/hadoop/hadoop-aws/3.3.3/hadoop-aws-3.3.3.jar -Lo ${SPARK_HOME}/jars/hadoop-aws-3.3.3.jar \
     && curl -s https://repo1.maven.org/maven2/com/amazonaws/aws-java-sdk-bundle/1.11.901/aws-java-sdk-bundle-1.11.901.jar -Lo ${SPARK_HOME}/jars/aws-java-sdk-bundle-1.11.901.jar
 

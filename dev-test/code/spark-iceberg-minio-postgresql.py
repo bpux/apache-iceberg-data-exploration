@@ -50,20 +50,12 @@ def run_spark_job():
     # Initialize Spark session
     spark = SparkSession.builder \
         .appName("IcebergExample") \
-        .config("spark.sql.extensions", "org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions") \
         .config("spark.hadoop.fs.s3a.endpoint", minio_endpoint) \
         .config("spark.hadoop.fs.s3a.access.key", minio_access_key) \
         .config("spark.hadoop.fs.s3a.secret.key", minio_secret_key) \
         .config("spark.hadoop.fs.s3a.path.style.access", "true") \
         .config("spark.hadoop.fs.s3a.impl", "org.apache.hadoop.fs.s3a.S3AFileSystem") \
-        .config("spark.sql.catalog.data", "org.apache.iceberg.spark.SparkCatalog") \
-        .config("spark.sql.catalog.data.warehouse", f"s3a://{bucket_name}/pg-catalog") \
-        .config("spark.sql.catalog.data.s3.endpoint", minio_endpoint) \
-        .config("spark.sql.catalog.data.io-impl", "org.apache.iceberg.aws.s3.S3FileIO") \
-        .config("spark.sql.catalog.data.catalog-impl", "org.apache.iceberg.jdbc.JdbcCatalog") \
-        .config("spark.sql.catalog.data.uri", "jdbc:postgresql://pg-catalog:5432/kxuiceberg") \
-        .config("spark.sql.catalog.data.jdbc.user", "kxuiceberg") \
-        .config("spark.sql.catalog.data.jdbc.password", "kxuiceberg") \
+        .config("spark.sql.defaultCatalog", "cdc") \
         .getOrCreate()
 
     # Step 1: Read input-data.csv
@@ -73,7 +65,7 @@ def run_spark_job():
     logger.info("\n=======================================================\n")
 
     table_name = "input_data_test_pg_catalog"
-    namespace = "data.db"
+    namespace = "db_test_2"
     # Step 2: Save as Iceberg table
     df.writeTo(f"{namespace}.{table_name}").createOrReplace()
 

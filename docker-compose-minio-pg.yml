@@ -16,14 +16,6 @@ services:
     ports:
       - "5432:5432"
 
-  minio-s3:
-    networks:
-      iceberg-net:
-
-  minio-s3-init:
-    networks:
-      iceberg-net:
-
   spark-iceberg:
     volumes:
       - ./spark/spark-defaults-minio-pg-catalog.conf:/opt/spark/conf/spark-defaults.conf #mount default config file   
