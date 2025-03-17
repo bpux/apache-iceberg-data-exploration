@@ -1,5 +1,6 @@
 {
     "connector.class": "io.tabular.iceberg.connect.IcebergSinkConnector",
+    "iceberg.catalog": "iceberg",
     "iceberg.catalog.client.region": "us-east-1",
     "iceberg.catalog.s3.access-key-id": "user",
     "iceberg.catalog.s3.endpoint": "http://minio-s3:9000",
@@ -16,7 +17,9 @@
     "iceberg.control.commitIntervalMs": "60000",
     "iceberg.tables.auto-create-enabled": "true",
     "iceberg.tables.evolve-schema-enabled": "true",
-    "iceberg.tables": "rpc.pizzas",
+    "iceberg.tables": "rpc.pizzas,rpc.pizzas_by_hour,rpc.pizzas_test",
+    "iceberg.tables.default-partition-by": "store_id",
+    "iceberg.control.commit.threads": "1",
     "key.converter": "org.apache.kafka.connect.storage.StringConverter",
     "tasks.max": "1",
     "topics": "completed-pizzas",
