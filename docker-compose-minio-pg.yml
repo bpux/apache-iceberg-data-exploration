@@ -9,6 +9,8 @@ services:
       - POSTGRES_USER=kxuiceberg
       - POSTGRES_PASSWORD=kxuiceberg
       - POSTGRES_DB=kxuiceberg
+    volumes:
+      - ./data/postgresql:/var/lib/postgresql/data
     healthcheck:
       test: [ "CMD", "pg_isready", "-U", "kxuiceberg" ]
       interval: 5s

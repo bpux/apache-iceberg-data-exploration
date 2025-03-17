@@ -1,0 +1,25 @@
+  services:
+    dremio:
+    # Dremio, UI for querying data across different data sources and with git like approach to data versioning
+      platform: linux/x86_64
+      image: dremio/dremio-oss:25.2
+      #logging: # too many logs coming from it
+      #  driver: "none"
+      ports:
+        - 9047:9047
+        - 31010:31010
+        - 32010:32010
+      container_name: dremio
+      volumes:
+        - ./dremio-conf/dremio-logback.xml:/opt/dremio/conf/logback.xml #mount modified log file
+        - ./dremio-conf/dremio.conf:/opt/dremio/conf/dremio.conf #mount modified config file
+        - ./dremio-conf/dremio-core-site.xml:/opt/dremio/conf/core-site.xml #mount modified core-site file
+      environment:
+        - DREMIO_JAVA_SERVER_EXTRA_OPTS=-Dpaths.dist=file:///opt/dremio/data/dist
+        - DREMIO_GC_LOGS_ENABLED=no  # Disable GC logs on console
+    
+      networks:
+        iceberg-net:
+
+  networks:
+    iceberg-net:

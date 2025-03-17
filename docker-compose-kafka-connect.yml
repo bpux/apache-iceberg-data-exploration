@@ -1,0 +1,77 @@
+services:
+  broker:
+    image: confluentinc/cp-kafka:7.4.1
+    container_name: broker
+    networks:
+      iceberg-net:
+    hostname: broker
+    ports:
+    - 29092:29092
+    volumes:
+      - ./data/kafka-data:/var/lib/kafka/data
+    environment:
+      KAFKA_LOG4J_ROOT_LOGLEVEL: "WARN"
+      KAFKA_LOG4J_LOGGERS: "kafka.controller=WARN,kafka.producer.async.DefaultEventHandler=WARN,state.change.logger=WARN,kafka.request.logger=WARN,kafka.log.LogCleaner=WARN,kafka.authorizer.logger=WARN"
+      KAFKA_BROKER_ID: 1
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker:9092,PLAINTEXT_HOST://localhost:29092
+      KAFKA_TRANSACTION_STATE_LOG_NUM_PARTITIONS:1
+      KAFKA_OFFSETS_TOPIC_NUM_PARTITIONS: 1
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_NODE_ID: 1
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@broker:29093
+      KAFKA_LISTENERS: PLAINTEXT://broker:9092,CONTROLLER://broker:29093,PLAINTEXT_HOST://0.0.0.0:29092
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      #KAFKA_LOG_DIRS: /tmp/kraft-combined-logs
+      CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
+      
+  connect:
+    image: confluentinc/cp-kafka-connect-base:7.3.0
+    container_name: connect
+    networks:
+      iceberg-net:
+    depends_on:
+    - broker
+    ports:
+    - 8083:8083
+    environment:
+      AWS_ACCESS_KEY_ID: user
+      AWS_SECRET_ACCESS_KEY: password
+      AWS_REGION: us-east-1
+      CONNECT_BOOTSTRAP_SERVERS: broker:9092
+      CONNECT_REST_ADVERTISED_HOST_NAME: connect
+      CONNECT_GROUP_ID: kafka-connect
+      CONNECT_CONFIG_STORAGE_TOPIC: _kafka-connect-configs
+      CONNECT_OFFSET_STORAGE_TOPIC: _kafka-connect-offsets
+      CONNECT_STATUS_STORAGE_TOPIC: _kafka-connect-status
+      CONNECT_KEY_CONVERTER: org.apache.kafka.connect.storage.StringConverter
+      CONNECT_VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+      CONNECT_VALUE_CONVERTER_SCHEMA_REGISTRY_URL: http://schema-registry:8081
+      CONNECT_LOG4J_ROOT_LOGLEVEL: ERROR
+      CONNECT_LOG4J_LOGGERS: org.apache.zookeeper=ERROR,org.I0Itec.zkclient=ERROR,org.reflections=ERROR,org.apache.kafka=ERROR,io.tabular.iceberg.connect.channel.Channel=DEBUG
+      CONNECT_CONFIG_STORAGE_REPLICATION_FACTOR: '1'
+      CONNECT_OFFSET_STORAGE_REPLICATION_FACTOR: '1'
+      CONNECT_STATUS_STORAGE_REPLICATION_FACTOR: '1'
+      CONNECT_OFFSET_STORAGE_PARTITIONS: '1'
+      CONNECT_STATUS_STORAGE_PARTITIONS: '1'
+      CONNECT_LOG4J_APPENDER_STDOUT_LAYOUT_CONVERSIONPATTERN: '[%d] %p %X{connector.context}%m
+        (%c:%L)%n'
+      CONNECT_PLUGIN_PATH: /usr/share/java,/usr/share/confluent-hub-components/
+    volumes:
+    #mount 3rd party jars
+      - ./3rd-party-jars/kafka-connect/:/usr/share/3rd-party-jars
+      #- ./3rd-party-jars/kafka-connect/iceberg-kafka-connect-runtime-0.7.0/lib/:/usr/share/java/kafka-connect-iceberg/
+    command:
+    - bash
+    - -c
+    - "echo \"Installing connector plugins\"\nmkdir -p /usr/share/confluent-hub-components/\nconfluent-hub
+      install --no-prompt --component-dir /usr/share/confluent-hub-components/ tabular/iceberg-kafka-connect:0.6.19\n#\n cp /usr/share/3rd-party-jars/*.jar /usr/share/confluent-hub-components/tabular-iceberg-kafka-connect/lib\necho
+      \"Launching Kafka Connect worker\"\n/etc/confluent/docker/run & \n#\nsleep infinity\n"
+    
+networks:
+  iceberg-net:
