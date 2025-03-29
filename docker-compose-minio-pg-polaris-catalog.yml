@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+
+  polaris:
+    image: apache/polaris:latest
+    container_name: polaris
+    ports:
+      - "8181:8181"
+      - "8182"
+    env_file:
+      - ./.env
+    environment:
+      AWS_REGION: $MINIO_REGION
+      AWS_ACCESS_KEY_ID: $MINIO_ROOT_USER
+      AWS_SECRET_ACCESS_KEY: $MINIO_ROOT_PASSWORD
+      POLARIS_BOOTSTRAP_CREDENTIALS: default-realm,root,s3cr3t
+      polaris.realm-context.realms: default-realm
+      quarkus.otel.sdk.disabled: "true"
+    healthcheck:
+      test: ["CMD", "curl", "http://localhost:8182/healthcheck"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+
+  pg-catalog:
+    image: postgres:17.3
+    container_name: pg_catalog
+    networks:
+      iceberg-net:
+    env_file:
+      - ./.env
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+    volumes:
+      - ./data/postgresql:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD", "pg_isready", "-U", "kxuiceberg" ]
+      interval: 5s
+      retries: 5
+    ports:
+      - "5432:5432"
+
+networks:
+  iceberg-net:

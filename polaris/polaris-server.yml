@@ -1,0 +1,40 @@
+server:
+  applicationConnectors:
+    - type: http
+      port: 8181
+  adminConnectors:
+    - type: http
+      port: 8182
+
+logging:
+  level: INFO
+  loggers:
+    org.apache.iceberg: DEBUG
+  appenders:
+    - type: console
+      threshold: ALL
+      timeZone: UTC
+      target: stdout
+    - type: file
+      threshold: ALL
+      currentLogFilename: /var/log/polaris/polaris.log
+      archive: true
+      archivedLogFilenamePattern: /var/log/polaris/polaris-%d.log.gz
+      archivedFileCount: 5
+      timeZone: UTC
+
+aws:
+  region: ${AWS_REGION:-us-east-1}
+  credentials:
+    accessKey: ${AWS_ACCESS_KEY_ID}
+    secretKey: ${AWS_SECRET_ACCESS_KEY}
+
+catalogs:
+  default:
+    type: iceberg
+    warehouse: s3://kxu-iceberg-data/warehouse
+    s3:
+      endpoint: http://minio-s3:9000
+      accessKeyId: ${AWS_ACCESS_KEY_ID}
+      secretAccessKey: ${AWS_SECRET_ACCESS_KEY}
+      pathStyleAccess: true

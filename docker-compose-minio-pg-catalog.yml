@@ -1,0 +1,50 @@
+
+services:
+  pg-catalog:
+    image: postgres:17.3
+    container_name: pg_catalog
+    networks:
+      iceberg-net:
+    env_file:
+      - ./.env
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+    volumes:
+      - ./data/postgresql:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD", "pg_isready", "-U", "kxuiceberg" ]
+      interval: 5s
+      retries: 5
+    ports:
+      - "5432:5432"
+
+  spark-iceberg:
+    volumes:
+      - ./spark/spark-defaults-minio-pg-catalog.conf:/opt/spark/conf/spark-defaults.conf #mount default config file   
+    networks:
+      iceberg-net:
+    depends_on:
+      pg-catalog:
+        condition: service_healthy
+      minio-s3-init:
+        condition: service_completed_successfully
+
+  spark-worker:
+    volumes:
+      - ./spark/spark-defaults-minio-pg-catalog.conf:/opt/spark/conf/spark-defaults.conf #mount default config file   
+    networks:
+      iceberg-net:
+
+  spark-history-server:
+    volumes:
+      - ./spark/spark-defaults-minio-pg-catalog.conf:/opt/spark/conf/spark-defaults.conf #mount default config file   
+    networks:
+      iceberg-net:
+
+#volumes:
+#  minio-s3-data:
+
+networks:
+  iceberg-net:
