@@ -4,10 +4,12 @@ services:
   pg-catalog:
     image: postgres:15-alpine
     container_name: pg_catalog
+    env_file:
+      - ./.env
     environment:
-      - POSTGRES_USER=kxuiceberg
-      - POSTGRES_PASSWORD=kxuiceberg
-      - POSTGRES_DB=kxuiceberg
+      - POSTGRES_USER={POSTGRES_USER}
+      - POSTGRES_PASSWORD={POSTGRES_PASSWORD}
+      - POSTGRES_DB={POSTGRES_DB}
     volumes:
       - ./data/postgresql:/var/lib/postgresql/data
     healthcheck:

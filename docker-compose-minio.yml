@@ -8,8 +8,8 @@ services:
       - "9000:9000"
       - "9001:9001"
     environment:
-      - MINIO_ROOT_USER=user
-      - MINIO_ROOT_PASSWORD=password
+      - MINIO_ROOT_USER=${MINIO_ROOT_USER}
+      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
     env_file:
       - ./minio/.env
     command: server --console-address ":9001" /data
@@ -36,9 +36,9 @@ services:
     volumes:
       - ./data/minio-init-data/:/data
     environment:
-      - USER=user
-      - MINIO_ROOT_USER=user
-      - MINIO_ROOT_PASSWORD=password
+      - USER=${MINIO_ROOT_USER}
+      - MINIO_ROOT_USER=${MINIO_ROOT_USER}
+      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
       - COPY_DIR=false
       - INPUT_BUCKETS=kxu-iceberg-data
     depends_on:

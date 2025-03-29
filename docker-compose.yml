@@ -1,6 +1,6 @@
 services:
   spark-iceberg:
-    image: spark-iceberg:25-03-10-15-26
+    image: spark-iceberg:latest
     container_name: spark-iceberg
     build: ./spark
     entrypoint: ['./entrypoint.sh', 'master' ]
@@ -27,7 +27,7 @@ services:
 
 
   spark-worker:
-    image: spark-iceberg:25-03-10-15-26
+    image: spark-iceberg:latest
     container_name: spark-worker
     entrypoint: [ './entrypoint.sh', 'worker' ]
     depends_on:
@@ -49,7 +49,7 @@ services:
 
   spark-history-server:
     container_name: spark-history
-    image: spark-iceberg:25-03-10-15-26
+    image: spark-iceberg:latest
     entrypoint: [ './entrypoint.sh', 'history' ]
     depends_on:
       - spark-iceberg
