@@ -1,0 +1,12 @@
+  services:
+    trino:
+      image: trinodb/trino:latest
+      ports:
+        - "18082:8080"
+      volumes:
+        - ./trino-conf/trino-catalog.properties:/etc/trino/catalog/trino-catalog.properties
+      networks:
+        iceberg-net:
+
+  networks:
+    iceberg-net:

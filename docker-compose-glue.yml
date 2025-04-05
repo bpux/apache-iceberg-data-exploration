@@ -1,0 +1,96 @@
+
+services:
+  glue:
+    image: amazon/aws-glue-libs:glue_libs_4.0.0_image_01
+    container_name: glue
+    env_file:
+      - spark/.env
+    environment:
+      - SERVICES=glue,s3
+    ports:
+      - "4566:4566"
+    networks:
+      iceberg-net:
+    volumes:
+      - ./data/glue-data:/data
+
+  minio-s3:
+    image: minio/minio:RELEASE.2025-02-07T23-21-09Z-cpuv1
+    container_name: iceberg_s3
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      - MINIO_ROOT_USER=user
+      - MINIO_ROOT_PASSWORD=password
+    env_file:
+      - ./minio/.env
+    command: server --console-address ":9001" /data
+    networks:
+      iceberg-net:
+        aliases:
+           #spark needs to write to the bucket
+           #need config in the 'spark-defaults.conf' too
+          - kxu-iceberg-data.minio-s3
+    volumes:
+      - ./data/minio-s3-data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
+  minio-s3-init:
+    build: ./minio/
+    networks:
+      iceberg-net:
+    env_file:
+      - ./minio/.env
+    volumes:
+      - ./data/minio-init-data/:/data
+    environment:
+      - USER=user
+      - MINIO_ROOT_USER=user
+      - MINIO_ROOT_PASSWORD=password
+      - COPY_DIR=false
+      - INPUT_BUCKETS=kxu-iceberg-data
+    depends_on:
+      - minio-s3
+    entrypoint: /bin/sh ./entrypoint.sh
+
+
+  spark-iceberg:
+    build:
+      context: ./spark
+    volumes:
+      - ./spark/spark-defaults-glue.conf:/opt/spark/conf/spark-defaults.conf #mount default config file   
+      
+    networks:
+      iceberg-net:
+    depends_on:
+      - minio-s3-init
+      - glue
+
+  spark-worker:
+    volumes:
+      - ./spark/spark-defaults-glue.conf:/opt/spark/conf/spark-defaults.conf #mount default config file   
+    networks:
+      iceberg-net:
+
+  spark-history-server:
+    volumes:
+      - ./spark/spark-defaults-glue.conf:/opt/spark/conf/spark-defaults.conf #mount default config file   
+    networks:
+      iceberg-net:
+
+  jupyter-notebook:
+    volumes:
+      - ./spark/spark-defaults-glue.conf:/opt/spark/conf/spark-defaults.conf #mount default config file   
+    networks:
+      iceberg-net:
+
+#volumes:
+#  minio-s3-data:
+
+networks:
+  iceberg-net:
